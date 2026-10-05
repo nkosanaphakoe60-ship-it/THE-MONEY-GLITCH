@@ -1,13 +1,13 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "THE MONEY GLITCH | GLITCHLIGHT™",
-  description: "Rechargeable motion-activated lighting without complicated installation.",
+  title: "THE MONEY GLITCH",
+  description: "Smart products. Smarter shopping.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-ZA">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
