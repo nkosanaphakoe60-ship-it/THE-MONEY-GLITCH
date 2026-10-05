@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 const bundles = [
   {
@@ -9,354 +8,778 @@ const bundles = [
     name: "Starter",
     units: 2,
     price: 349,
-    description: "For a bedroom, cupboard or small apartment.",
-    tag: "ENTRY",
+    description: "Perfect for a bedroom, hallway or small space.",
   },
   {
     id: "home",
     name: "Home",
     units: 4,
     price: 549,
-    description: "Cover multiple dark spaces around your home.",
-    tag: "POPULAR",
+    description: "Our balanced option for lighting multiple areas.",
+    popular: true,
   },
   {
     id: "whole-home",
     name: "Whole Home",
     units: 6,
     price: 749,
-    description: "Light up multiple areas throughout your home.",
-    tag: "BEST VALUE",
+    description: "Light up more spaces with our biggest bundle.",
   },
 ];
 
-const features = [
-  ["⚡", "Motion activated", "The light turns on when movement is detected."],
-  ["🔋", "Rechargeable", "Charge the unit instead of constantly replacing batteries."],
-  ["🧲", "Easy placement", "Designed for simple placement using its magnetic mounting."],
-  ["🏠", "Multiple uses", "Cupboards, wardrobes, passages, stairs, bedrooms and more."],
+const faqs = [
+  {
+    question: "What is GLITCHLIGHT™?",
+    answer:
+      "GLITCHLIGHT™ is a rechargeable motion-sensor light designed to automatically provide light when movement is detected.",
+  },
+  {
+    question: "Where can I use it?",
+    answer:
+      "It can be used in places such as bedrooms, cupboards, wardrobes, passages, kitchens, stair areas and other spaces where extra light is useful.",
+  },
+  {
+    question: "Does it need wiring?",
+    answer:
+      "No permanent wiring is required. The concept is simple: mount the light where you need it and recharge it when necessary.",
+  },
+  {
+    question: "How do I choose a bundle?",
+    answer:
+      "Choose Starter for a couple of areas, Home for several rooms, or Whole Home if you want multiple lights around your space.",
+  },
+  {
+    question: "Can I pay online?",
+    answer:
+      "Online payment will be connected during the next stage of the store build. This version prepares the checkout experience but does not process real payments yet.",
+  },
 ];
 
-function track(event, data = {}) {
-  if (typeof window === "undefined") return;
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    event,
-    ...data,
-    timestamp: new Date().toISOString(),
-  });
-}
-
 export default function Home() {
-  const [selected, setSelected] = useState("home");
+  const [selectedBundle, setSelectedBundle] = useState(bundles[1]);
   const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [ordered, setOrdered] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [faqOpen, setFaqOpen] = useState(null);
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
 
-  const bundle = useMemo(
-    () => bundles.find((item) => item.id === selected) || bundles[1],
-    [selected]
-  );
+  const cartTotal = selectedBundle.price * quantity;
 
   useEffect(() => {
-    track("store_view");
+    if (typeof window !== "undefined") {
+      window.dataLayer = window.dataLayer || [];
+
+      window.dataLayer.push({
+        event: "store_view",
+        store: "THE MONEY GLITCH",
+      });
+    }
   }, []);
 
-  function chooseBundle(item) {
-    setSelected(item.id);
-    track("bundle_selected", {
-      bundle: item.id,
-      units: item.units,
-      price: item.price,
+  function trackEvent(event, data = {}) {
+    if (typeof window !== "undefined") {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event,
+        ...data,
+      });
+    }
+  }
+
+  function chooseBundle(bundle) {
+    setSelectedBundle(bundle);
+
+    trackEvent("bundle_selected", {
+      bundle: bundle.name,
+      units: bundle.units,
+      price: bundle.price,
     });
   }
 
   function addToCart() {
-    track("add_to_cart", {
-      bundle: bundle.id,
-      units: bundle.units,
-      value: bundle.price,
-      currency: "ZAR",
-    });
     setCartOpen(true);
+
+    trackEvent("add_to_cart", {
+      bundle: selectedBundle.name,
+      units: selectedBundle.units,
+      quantity,
+      value: cartTotal,
+    });
   }
 
-  function startCheckout() {
-    track("begin_checkout", {
-      bundle: bundle.id,
-      value: bundle.price,
-      currency: "ZAR",
-    });
+  function openCheckout() {
     setCartOpen(false);
     setCheckoutOpen(true);
+
+    trackEvent("begin_checkout", {
+      bundle: selectedBundle.name,
+      quantity,
+      value: cartTotal,
+    });
   }
 
-  function placeOrder(e) {
-    e.preventDefault();
-    track("purchase_intent", {
-      bundle: bundle.id,
-      value: bundle.price,
-      currency: "ZAR",
+  function submitOrder(event) {
+    event.preventDefault();
+
+    setOrderSubmitted(true);
+
+    trackEvent("purchase_intent", {
+      bundle: selectedBundle.name,
+      quantity,
+      value: cartTotal,
     });
-    setCheckoutOpen(false);
-    setOrdered(true);
+  }
+
+  function scrollToBundles() {
+    document.getElementById("bundles")?.scrollIntoView({
+      behavior: "smooth",
+    });
   }
 
   return (
-    <main>
-      <header className="nav">
-        <a className="logo" href="#top" aria-label="The Money Glitch home">
-          <span className="logo-mark">MG</span>
-          <span>THE MONEY GLITCH</span>
-        </a>
-        <button className="nav-cart" onClick={() => setCartOpen(true)}>
-          Cart
-        </button>
-      </header>
+    <>
+      {/* HEADER */}
+      <header className="site-header">
+        <div className="container nav">
+          <a href="#" className="logo">
+            THE <span>MONEY GLITCH</span>
+          </a>
 
-      <section id="top" className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">SMART LIGHTING • SOUTH AFRICA</p>
-          <h1>Light exactly when you need it.</h1>
-          <p className="hero-text">
-            Motion-activated rechargeable lighting for dark spaces — without
-            complicated wiring.
-          </p>
-          <div className="hero-actions">
-            <a href="#bundles" className="button primary">
-              Shop GLITCHLIGHT™
-            </a>
-            <a href="#how" className="button ghost">
-              See how it works
-            </a>
-          </div>
-          <div className="trust-row">
-            <span>✓ Rechargeable</span>
-            <span>✓ Motion activated</span>
-            <span>✓ Easy placement</span>
-          </div>
-        </div>
+          <nav className="nav-links">
+            <a href="#why">Why GLITCHLIGHT</a>
+            <a href="#bundles">Bundles</a>
+            <a href="#faq">FAQ</a>
+          </nav>
 
-        <div className="product-stage">
-          <div className="light-orb" />
-          <div className="product-placeholder">
-            <span>GLITCHLIGHT™</span>
-            <small>PRODUCT PHOTO / VIDEO GOES HERE</small>
-          </div>
-          <div className="floating-note">NO WIRES • NO FUSS</div>
-        </div>
-      </section>
-
-      <section className="problem section">
-        <p className="eyebrow">THE EVERYDAY PROBLEM</p>
-        <h2>Dark spaces shouldn't slow you down.</h2>
-        <p className="section-lead">
-          Put light where you actually need it: inside cupboards, along
-          passages, beside the bed, on stairs or wherever a dark corner gets
-          annoying.
-        </p>
-        <div className="use-grid">
-          {["Cupboards", "Passages", "Bedrooms", "Stairs"].map((item) => (
-            <div className="use-card" key={item}>
-              <div className="use-visual">☾</div>
-              <strong>{item}</strong>
-              <span>Automatic light when movement is detected.</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="how" className="demo section dark">
-        <div>
-          <p className="eyebrow">HOW IT WORKS</p>
-          <h2>Dark → movement → light.</h2>
-          <p className="section-lead">
-            Replace the final demo placeholder with a real product video after
-            the exact supplier model has been tested.
-          </p>
-        </div>
-        <div className="demo-card">
-          <div className="demo-dark">DARK</div>
-          <div className="demo-arrow">→</div>
-          <div className="demo-light">LIGHT</div>
-        </div>
-      </section>
-
-      <section className="section">
-        <p className="eyebrow">WHY GLITCHLIGHT™</p>
-        <h2>Simple technology. Useful every day.</h2>
-        <div className="feature-grid">
-          {features.map(([icon, title, text]) => (
-            <article className="feature-card" key={title}>
-              <div className="feature-icon">{icon}</div>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="bundles" className="section bundles-section">
-        <p className="eyebrow">CHOOSE YOUR BUNDLE</p>
-        <h2>Start with one area or light up the home.</h2>
-        <p className="section-lead">
-          These are launch-test prices. Final pricing will be locked after
-          supplier, delivery and product-sample validation.
-        </p>
-
-        <div className="bundle-grid">
-          {bundles.map((item) => (
-            <button
-              className={`bundle-card ${selected === item.id ? "selected" : ""}`}
-              key={item.id}
-              onClick={() => chooseBundle(item)}
-            >
-              <span className="bundle-tag">{item.tag}</span>
-              <span className="bundle-name">{item.name}</span>
-              <span className="bundle-units">{item.units} GLITCHLIGHT™ units</span>
-              <strong>R{item.price}</strong>
-              <span className="bundle-description">{item.description}</span>
-              <span className="radio">
-                {selected === item.id ? "✓ Selected" : "Select"}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="buy-panel">
-          <div>
-            <span className="muted">Selected</span>
-            <strong>
-              {bundle.name} · {bundle.units} units
-            </strong>
-          </div>
-          <div className="buy-price">R{bundle.price}</div>
-          <button className="button primary" onClick={addToCart}>
-            Add to cart
+          <button
+            className="cart-button"
+            onClick={() => setCartOpen(true)}
+          >
+            Cart
           </button>
         </div>
-      </section>
+      </header>
 
-      <section className="section faq">
-        <p className="eyebrow">QUESTIONS</p>
-        <h2>Before you order.</h2>
-        <details>
-          <summary>Where can I use GLITCHLIGHT™?</summary>
-          <p>
-            Suitable use cases include cupboards, wardrobes, passages,
-            bedrooms, stairs and other appropriate dark spaces.
-          </p>
-        </details>
-        <details>
-          <summary>Does it need wiring?</summary>
-          <p>
-            The launch product is intended to be rechargeable rather than
-            permanently wired. Exact charging and installation specifications
-            will be confirmed against the final tested SKU.
-          </p>
-        </details>
-        <details>
-          <summary>How long does the battery last?</summary>
-          <p>
-            We will publish the tested runtime for the exact product we sell.
-            We won't invent a battery figure from a supplier listing.
-          </p>
-        </details>
-        <details>
-          <summary>What if my item arrives defective?</summary>
-          <p>
-            Contact support with your order details and photos/video where
-            useful. Returns and replacements will follow our published policy
-            and applicable South African consumer law.
-          </p>
-        </details>
-      </section>
+      {/* HERO */}
+      <main>
+        <section className="hero">
+          <div className="container hero-content">
+            <div className="badge">THE MONEY GLITCH™</div>
 
-      <section className="final-cta">
-        <p className="eyebrow">READY?</p>
-        <h2>Stop reaching for the switch.</h2>
-        <p>Choose your GLITCHLIGHT™ bundle and put light where you need it.</p>
-        <a href="#bundles" className="button primary">
-          Shop now
-        </a>
-      </section>
+            <h1>
+              Light where
+              <br />
+              you <span>need it.</span>
+            </h1>
 
-      <footer>
-        <div>
-          <strong>THE MONEY GLITCH</strong>
-          <span>GLITCHLIGHT™</span>
+            <p className="hero-text">
+              Meet GLITCHLIGHT™ — a simple rechargeable lighting solution
+              designed to bring light to dark spaces without complicated
+              wiring or permanent installation.
+            </p>
+
+            <div className="hero-actions">
+              <button
+                className="primary-button"
+                onClick={scrollToBundles}
+              >
+                Get GLITCHLIGHT™
+              </button>
+
+              <a href="#why" className="secondary-button">
+                See how it works
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* TRUST STRIP */}
+        <section className="trust-strip">
+          <div className="container trust-items">
+            <div className="trust-item">RECHARGEABLE</div>
+            <div className="trust-item">MOTION ACTIVATED</div>
+            <div className="trust-item">NO PERMANENT WIRING</div>
+            <div className="trust-item">MADE FOR EVERYDAY SPACES</div>
+          </div>
+        </section>
+
+        {/* PRODUCT */}
+        <section className="section">
+          <div className="container product-layout">
+            <div className="product-card">
+              <div className="product-image">
+                <div className="product-placeholder">
+                  <strong>GLITCHLIGHT™</strong>
+                  <p>
+                    Product photography will be added
+                    <br />
+                    once the physical sample is approved.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="badge">THE PRODUCT</div>
+
+              <h2 className="section-title">
+                Your dark-space
+                <br />
+                <span className="text-accent">upgrade.</span>
+              </h2>
+
+              <p className="section-subtitle">
+                Instead of reaching for a switch every time, GLITCHLIGHT™
+                is designed to give you light when movement is detected.
+              </p>
+
+              <br />
+
+              <button
+                className="primary-button"
+                onClick={scrollToBundles}
+              >
+                Choose your bundle
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* WHY */}
+        <section className="section" id="why">
+          <div className="container">
+            <div className="badge">WHY GLITCHLIGHT™</div>
+
+            <h2 className="section-title">
+              Small product.
+              <br />
+              <span className="text-accent">Big convenience.</span>
+            </h2>
+
+            <p className="section-subtitle">
+              Built around one simple idea: useful light should be easy
+              to access.
+            </p>
+
+            <div className="feature-grid">
+              <article className="feature-card">
+                <div className="feature-number">01</div>
+                <h3>Motion activated</h3>
+                <p>
+                  Designed to turn on when movement is detected, making
+                  everyday movement through dark areas more convenient.
+                </p>
+              </article>
+
+              <article className="feature-card">
+                <div className="feature-number">02</div>
+                <h3>Rechargeable</h3>
+                <p>
+                  Recharge the light instead of relying on disposable
+                  batteries.
+                </p>
+              </article>
+
+              <article className="feature-card">
+                <div className="feature-number">03</div>
+                <h3>No electrician</h3>
+                <p>
+                  A simple installation concept without requiring
+                  permanent electrical wiring.
+                </p>
+              </article>
+
+              <article className="feature-card">
+                <div className="feature-number">04</div>
+                <h3>Multiple spaces</h3>
+                <p>
+                  Use multiple units around your home wherever extra
+                  light is useful.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {/* HOW IT WORKS */}
+        <section className="section">
+          <div className="container">
+            <div className="center">
+              <div className="badge">HOW IT WORKS</div>
+
+              <h2 className="section-title">
+                Three steps.
+                <br />
+                <span className="text-accent">That's it.</span>
+              </h2>
+            </div>
+
+            <div className="feature-grid">
+              <article className="feature-card">
+                <div className="feature-number">01</div>
+                <h3>Place it</h3>
+                <p>
+                  Put GLITCHLIGHT™ in a space where you want convenient
+                  automatic lighting.
+                </p>
+              </article>
+
+              <article className="feature-card">
+                <div className="feature-number">02</div>
+                <h3>Move</h3>
+                <p>
+                  Walk into the area and let the motion sensor do the
+                  work.
+                </p>
+              </article>
+
+              <article className="feature-card">
+                <div className="feature-number">03</div>
+                <h3>See the difference</h3>
+                <p>
+                  Enjoy convenient lighting without reaching for a
+                  traditional switch.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        {/* BUNDLES */}
+        <section className="section" id="bundles">
+          <div className="container">
+            <div className="badge">CHOOSE YOUR GLITCH</div>
+
+            <h2 className="section-title">
+              Pick your
+              <br />
+              <span className="text-accent">bundle.</span>
+            </h2>
+
+            <p className="section-subtitle">
+              More lights means more spaces covered. Choose the setup
+              that fits your home.
+            </p>
+
+            <div className="bundle-grid">
+              {bundles.map((bundle) => {
+                const selected = selectedBundle.id === bundle.id;
+
+                return (
+                  <button
+                    key={bundle.id}
+                    className={`bundle-card ${
+                      selected ? "selected" : ""
+                    }`}
+                    onClick={() => chooseBundle(bundle)}
+                  >
+                    {bundle.popular && (
+                      <div className="bundle-popular">
+                        Most popular
+                      </div>
+                    )}
+
+                    <div className="bundle-name">
+                      {bundle.name}
+                    </div>
+
+                    <div className="bundle-price">
+                      R{bundle.price}
+                    </div>
+
+                    <div className="bundle-description">
+                      {bundle.units} GLITCHLIGHT™ units
+                      <br />
+                      {bundle.description}
+                    </div>
+
+                    <div className="primary-button">
+                      {selected ? "Selected" : "Choose"}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ marginTop: 24, textAlign: "center" }}>
+              <button
+                className="primary-button"
+                onClick={addToCart}
+              >
+                Add {selectedBundle.name} to cart — R
+                {selectedBundle.price * quantity}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* PRODUCT VALUE */}
+        <section className="section">
+          <div className="container">
+            <div className="product-card">
+              <div className="product-info">
+                <div className="badge">THE MONEY GLITCH PROMISE</div>
+
+                <h2 className="section-title">
+                  We don't sell
+                  <br />
+                  <span className="text-accent">random junk.</span>
+                </h2>
+
+                <p className="section-subtitle">
+                  THE MONEY GLITCH is being built around useful products,
+                  clear offers and real customer value. We test products,
+                  measure performance and improve based on actual results.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="section" id="faq">
+          <div className="container">
+            <div className="badge">FAQ</div>
+
+            <h2 className="section-title">
+              Questions?
+              <br />
+              <span className="text-accent">We've got you.</span>
+            </h2>
+
+            <div className="faq">
+              {faqs.map((faq, index) => (
+                <button
+                  key={faq.question}
+                  className="faq-item"
+                  onClick={() =>
+                    setFaqOpen(
+                      faqOpen === index ? null : index
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    color: "inherit",
+                    textAlign: "left",
+                    borderLeft: "none",
+                    borderRight: "none",
+                    borderBottom: "1px solid var(--border)",
+                    borderTop: "none",
+                  }}
+                >
+                  <div className="faq-question">
+                    {faqOpen === index ? "− " : "+ "}
+                    {faq.question}
+                  </div>
+
+                  {faqOpen === index && (
+                    <div className="faq-answer">
+                      {faq.answer}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="final-cta">
+          <div className="container">
+            <div className="badge">READY?</div>
+
+            <h2>
+              Stop living
+              <br />
+              in the <span className="text-accent">dark.</span>
+            </h2>
+
+            <p>
+              Choose your GLITCHLIGHT™ bundle and bring convenient
+              lighting into the spaces that need it.
+            </p>
+
+            <button
+              className="primary-button"
+              onClick={scrollToBundles}
+            >
+              Choose your bundle
+            </button>
+          </div>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="site-footer">
+        <div className="container footer-inner">
+          <div>
+            <strong>THE MONEY GLITCH</strong>
+            <br />
+            Smart products. Smarter shopping.
+          </div>
+
+          <div>
+            © {new Date().getFullYear()} THE MONEY GLITCH
+          </div>
         </div>
-        <p>© 2026 THE MONEY GLITCH. Product specifications subject to final validation.</p>
       </footer>
 
+      {/* CART OVERLAY */}
       {cartOpen && (
-        <div className="overlay" onMouseDown={() => setCartOpen(false)}>
-          <aside className="drawer" onMouseDown={(e) => e.stopPropagation()}>
-            <button className="close" onClick={() => setCartOpen(false)}>×</button>
-            <p className="eyebrow">YOUR CART</p>
-            <h2>{bundle.name} Bundle</h2>
-            <div className="cart-line">
-              <span>{bundle.units} × GLITCHLIGHT™</span>
-              <strong>R{bundle.price}</strong>
+        <>
+          <div
+            className="cart-overlay"
+            onClick={() => setCartOpen(false)}
+          />
+
+          <aside className="cart-drawer">
+            <div className="cart-header">
+              <h2>Your Cart</h2>
+
+              <button
+                className="close-button"
+                onClick={() => setCartOpen(false)}
+              >
+                ×
+              </button>
             </div>
+
+            <div className="cart-item">
+              <div>
+                <strong>GLITCHLIGHT™</strong>
+
+                <p className="text-muted">
+                  {selectedBundle.name} ·{" "}
+                  {selectedBundle.units} units
+                </p>
+              </div>
+
+              <strong>R{selectedBundle.price}</strong>
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+              <p className="text-muted">Quantity</p>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginTop: 10,
+                }}
+              >
+                <button
+                  className="close-button"
+                  onClick={() =>
+                    setQuantity(Math.max(1, quantity - 1))
+                  }
+                >
+                  −
+                </button>
+
+                <strong>{quantity}</strong>
+
+                <button
+                  className="close-button"
+                  onClick={() =>
+                    setQuantity(quantity + 1)
+                  }
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             <div className="cart-total">
-              <span>Subtotal</span>
-              <strong>R{bundle.price}</strong>
+              <span>Total</span>
+              <span>R{cartTotal}</span>
             </div>
-            <p className="small">
-              Delivery will be calculated/confirmed before the live payment
-              gateway is enabled.
-            </p>
-            <button className="button primary full" onClick={startCheckout}>
+
+            <button
+              className="primary-button"
+              style={{ width: "100%" }}
+              onClick={openCheckout}
+            >
               Continue to checkout
             </button>
+
+            <p
+              className="text-muted"
+              style={{
+                marginTop: 15,
+                fontSize: "0.75rem",
+                textAlign: "center",
+              }}
+            >
+              Checkout is currently in demo mode.
+            </p>
           </aside>
-        </div>
+        </>
       )}
 
+      {/* CHECKOUT */}
       {checkoutOpen && (
-        <div className="overlay">
-          <aside className="checkout">
-            <button className="close" onClick={() => setCheckoutOpen(false)}>×</button>
-            <p className="eyebrow">CHECKOUT DEMO</p>
-            <h2>Complete your order</h2>
-            <p className="small">
-              This MVP collects the order details. A real payment provider
-              should be connected before accepting live money.
-            </p>
-            <form onSubmit={placeOrder}>
-              <label>Full name<input required name="name" autoComplete="name" /></label>
-              <label>Email<input required type="email" name="email" autoComplete="email" /></label>
-              <label>Phone<input required name="phone" autoComplete="tel" /></label>
-              <label>Delivery address<textarea required name="address" rows="3" /></label>
-              <div className="checkout-summary">
-                <span>{bundle.name} · {bundle.units} units</span>
-                <strong>R{bundle.price}</strong>
-              </div>
-              <button className="button primary full" type="submit">
-                Place test order
-              </button>
-            </form>
-          </aside>
-        </div>
-      )}
+        <>
+          <div
+            className="cart-overlay"
+            onClick={() => setCheckoutOpen(false)}
+          />
 
-      {ordered && (
-        <div className="overlay">
-          <aside className="success">
-            <div className="success-icon">✓</div>
-            <p className="eyebrow">TEST ORDER</p>
-            <h2>Order flow works.</h2>
-            <p>
-              No real payment was taken. The next integration is the live
-              payment gateway, delivery calculation and order database.
-            </p>
-            <button className="button primary full" onClick={() => setOrdered(false)}>
-              Back to store
-            </button>
+          <aside className="cart-drawer">
+            <div className="cart-header">
+              <h2>Checkout</h2>
+
+              <button
+                className="close-button"
+                onClick={() => setCheckoutOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            {!orderSubmitted ? (
+              <form onSubmit={submitOrder}>
+                <div className="cart-item">
+                  <div>
+                    <strong>
+                      {selectedBundle.name} Bundle
+                    </strong>
+
+                    <p className="text-muted">
+                      {selectedBundle.units} GLITCHLIGHT™ units ×{" "}
+                      {quantity}
+                    </p>
+                  </div>
+
+                  <strong>R{cartTotal}</strong>
+                </div>
+
+                <div style={{ marginTop: 25 }}>
+                  <label className="text-muted">
+                    Full name
+                  </label>
+
+                  <input
+                    required
+                    type="text"
+                    placeholder="Your full name"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ marginTop: 15 }}>
+                  <label className="text-muted">
+                    Phone number
+                  </label>
+
+                  <input
+                    required
+                    type="tel"
+                    placeholder="e.g. 071 234 5678"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ marginTop: 15 }}>
+                  <label className="text-muted">
+                    Email
+                  </label>
+
+                  <input
+                    required
+                    type="email"
+                    placeholder="you@example.com"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ marginTop: 15 }}>
+                  <label className="text-muted">
+                    Delivery address
+                  </label>
+
+                  <textarea
+                    required
+                    placeholder="Street address, suburb, city, province"
+                    rows="4"
+                    style={inputStyle}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                  style={{
+                    width: "100%",
+                    marginTop: 20,
+                  }}
+                >
+                  Place order — R{cartTotal}
+                </button>
+
+                <p
+                  className="text-muted"
+                  style={{
+                    fontSize: "0.72rem",
+                    marginTop: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  No payment will be taken yet. This is a
+                  checkout preview.
+                </p>
+              </form>
+            ) : (
+              <div style={{ textAlign: "center", paddingTop: 40 }}>
+                <div
+                  style={{
+                    fontSize: "3rem",
+                    marginBottom: 20,
+                  }}
+                >
+                  ✓
+                </div>
+
+                <h2>Order received</h2>
+
+                <p
+                  className="text-muted"
+                  style={{ marginTop: 12 }}
+                >
+                  Your checkout information has been captured in
+                  demo mode.
+                </p>
+
+                <button
+                  className="primary-button"
+                  style={{
+                    width: "100%",
+                    marginTop: 25,
+                  }}
+                  onClick={() => {
+                    setCheckoutOpen(false);
+                    setOrderSubmitted(false);
+                  }}
+                >
+                  Back to store
+                </button>
+              </div>
+            )}
           </aside>
-        </div>
+        </>
       )}
-    </main>
+    </>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  marginTop: 7,
+  padding: "14px",
+  borderRadius: "10px",
+  border: "1px solid var(--border)",
+  background: "var(--surface-2)",
+  color: "var(--text)",
+  outline: "none",
+};
